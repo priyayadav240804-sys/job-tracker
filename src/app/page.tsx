@@ -110,7 +110,10 @@ export default function Home() {
             {/* Dashboard Stat Cards */}
             <StatsOverview applications={applications} />
 
-            {/* Follow-ups Needed Section (Displays automatically when any application meets threshold) */}
+            {/* Core Add Application Form */}
+            <ApplicationForm onAddApplication={handleAddApplication} />
+
+            {/* Follow-ups Needed Section (Positioned directly above the main list; hidden if none need follow-up) */}
             <FollowUpSection
               applications={applications}
               settings={settings}
@@ -118,9 +121,6 @@ export default function Home() {
               onDelete={handleDeleteApplication}
               onSelectApplication={(app) => setSelectedApplication(app)}
             />
-
-            {/* Core Add Application Form */}
-            <ApplicationForm onAddApplication={handleAddApplication} />
 
             {/* Applications List and Pipeline View */}
             <ApplicationList
