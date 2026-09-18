@@ -5,6 +5,7 @@ import { AppSettings, JobApplication, JobStatus } from '@/types/job';
 import { getDaysSince, isFollowUpNeeded } from '@/lib/storage';
 import StatusBadge from './StatusBadge';
 import FollowUpBadge from './FollowUpBadge';
+import ActivityTimeline from './ActivityTimeline';
 
 interface ApplicationDetailModalProps {
   application: JobApplication | null;
@@ -200,6 +201,12 @@ export default function ApplicationDetailModal({
             </button>
           </div>
         </div>
+
+        {/* Read-only Activity Log Timeline */}
+        <ActivityTimeline
+          activityLog={application.activityLog}
+          createdAt={application.createdAt}
+        />
 
         {/* Footer Actions */}
         <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-800">

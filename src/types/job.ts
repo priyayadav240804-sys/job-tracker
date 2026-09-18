@@ -1,5 +1,14 @@
 export type JobStatus = 'Applied' | 'Interview' | 'Offer' | 'Rejected' | 'no response';
 
+export interface ActivityLogEntry {
+  id: string;
+  type: 'created' | 'status_change';
+  fromStatus?: JobStatus;
+  toStatus?: JobStatus;
+  description: string;
+  timestamp: number; // Unix timestamp in ms
+}
+
 export interface JobApplication {
   id: string;
   company: string;
@@ -8,6 +17,7 @@ export interface JobApplication {
   jobUrl?: string;
   status: JobStatus;
   notes?: string;
+  activityLog?: ActivityLogEntry[];
   createdAt: number;
 }
 

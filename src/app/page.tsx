@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AppSettings, JobApplication, JobStatus } from '@/types/job';
+import { ActivityLogEntry, AppSettings, JobApplication, JobStatus } from '@/types/job';
 import {
   DEFAULT_SETTINGS,
   getStoredApplications,
@@ -38,10 +38,20 @@ export default function Home() {
   const handleAddApplication = (
     newAppData: Omit<JobApplication, 'id' | 'createdAt'>
   ) => {
+    const now = Date.now();
+    const creationLog: ActivityLogEntry = {
+      id: `log_${now}_${Math.random().toString(36).substring(2, 7)}`,
+      type: 'created',
+      toStatus: newAppData.status,
+      description: 'Application created',
+      timestamp: now,
+    };
+
     const newApp: JobApplication = {
       ...newAppData,
-      id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `app_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      createdAt: Date.now(),
+      id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `app_${now}_${Math.random().toString(36).substring(2, 7)}`,
+      activityLog: [creationLog],
+      createdAt: now,
     };
 
     const updated = [newApp, ...applications];
@@ -62,14 +72,48 @@ export default function Home() {
 
   // Handler: Update Application Status
   const handleUpdateStatus = (id: string, status: JobStatus) => {
-    const updated = applications.map((app) =>
-      app.id === id ? { ...app, status } : app
-    );
+    const now = Date.now();
+    const updated = applications.map((app) => {
+      if (app.id !== id) return app;
+      if (app.status === status) return app; // No status change
+
+      const statusLog: ActivityLogEntry = {
+        id: `log_${now}_${Math.random().toString(36).substring(2, 7)}`,
+        type: 'status_change',
+        fromStatus: app.status,
+        toStatus: status,
+        description: `${app.status} → ${status}`,
+        timestamp: now,
+      };
+
+      const existingLogs =
+        app.activityLog && app.activityLog.length > 0
+          ? app.activityLog
+          : [
+              {
+                id: `log_init_${app.id}`,
+                type: 'created' as const,
+                toStatus: app.status,
+                description: 'Application created',
+                timestamp: app.createdAt || now,
+              },
+            ];
+
+      return {
+        ...app,
+        status,
+        activityLog: [statusLog, ...existingLogs], // Most recent entry on top
+      };
+    });
+
     setApplications(updated);
     saveStoredApplications(updated);
 
     if (selectedApplication?.id === id) {
-      setSelectedApplication((prev) => (prev ? { ...prev, status } : null));
+      const current = updated.find((a) => a.id === id);
+      if (current) {
+        setSelectedApplication(current);
+      }
     }
   };
 
