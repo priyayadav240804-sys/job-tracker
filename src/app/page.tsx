@@ -16,6 +16,8 @@ import FollowUpSection from '@/components/FollowUpSection';
 import SettingsPanel from '@/components/SettingsPanel';
 import ApplicationDetailModal from '@/components/ApplicationDetailModal';
 import StatsOverview from '@/components/StatsOverview';
+import UpcomingInterviewsSection from '@/components/UpcomingInterviewsSection';
+import ScheduleInterviewModal from '@/components/ScheduleInterviewModal';
 
 export default function Home() {
   const [applications, setApplications] = useState<JobApplication[]>([]);
@@ -24,6 +26,7 @@ export default function Home() {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<JobApplication | null>(null);
+  const [schedulingApp, setSchedulingApp] = useState<JobApplication | null>(null);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -57,6 +60,10 @@ export default function Home() {
     const updated = [newApp, ...applications];
     setApplications(updated);
     saveStoredApplications(updated);
+
+    if (newApp.status === 'Interview') {
+      setSchedulingApp(newApp);
+    }
   };
 
   // Handler: Delete Application
@@ -115,6 +122,29 @@ export default function Home() {
         setSelectedApplication(current);
       }
     }
+
+    // Prompt to schedule interview if newly moved to Interview
+    if (status === 'Interview') {
+      const target = updated.find((a) => a.id === id);
+      if (target) {
+        setSchedulingApp(target);
+      }
+    }
+  };
+
+  // Handler: Update Interview Date & Time
+  const handleUpdateInterviewDateTime = (id: string, dateTime: string) => {
+    const updated = applications.map((app) =>
+      app.id === id ? { ...app, interviewDateTime: dateTime || undefined } : app
+    );
+    setApplications(updated);
+    saveStoredApplications(updated);
+
+    if (selectedApplication?.id === id) {
+      setSelectedApplication((prev) =>
+        prev ? { ...prev, interviewDateTime: dateTime || undefined } : null
+      );
+    }
   };
 
   // Handler: Update Application Notes
@@ -157,6 +187,12 @@ export default function Home() {
             {/* Core Add Application Form */}
             <ApplicationForm onAddApplication={handleAddApplication} />
 
+            {/* Upcoming Interviews Section (Separate from follow-ups, lists future interviews sorted soonest first) */}
+            <UpcomingInterviewsSection
+              applications={applications}
+              onSelectApplication={(app) => setSelectedApplication(app)}
+            />
+
             {/* Follow-ups Needed Section (Positioned directly above the main list; hidden if none need follow-up) */}
             <FollowUpSection
               applications={applications}
@@ -194,7 +230,21 @@ export default function Home() {
         onClose={() => setSelectedApplication(null)}
         onUpdateNotes={handleUpdateNotes}
         onUpdateStatus={handleUpdateStatus}
+        onUpdateInterviewDateTime={handleUpdateInterviewDateTime}
         onDelete={handleDeleteApplication}
+      />
+
+      {/* Schedule Interview Prompt Modal */}
+      <ScheduleInterviewModal
+        application={schedulingApp}
+        isOpen={Boolean(schedulingApp)}
+        onSave={(dateTime) => {
+          if (schedulingApp) {
+            handleUpdateInterviewDateTime(schedulingApp.id, dateTime);
+            setSchedulingApp(null);
+          }
+        }}
+        onSkip={() => setSchedulingApp(null)}
       />
     </div>
   );

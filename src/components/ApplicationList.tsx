@@ -6,6 +6,8 @@ import { getDaysSince, getFollowUpOverdueDays, isFollowUpNeeded } from '@/lib/st
 import StatusBadge from './StatusBadge';
 import FollowUpBadge from './FollowUpBadge';
 import NotesIcon from './NotesIcon';
+import InterviewFeedbackPrompt from './InterviewFeedbackPrompt';
+import { formatInterviewCountdown, isInterviewPast, isInterviewUpcoming } from '@/lib/interview';
 
 interface ApplicationListProps {
   applications: JobApplication[];
@@ -317,6 +319,8 @@ export default function ApplicationList({
             const needsFollowUp = isFollowUpNeeded(app, settings.followUpDaysThreshold);
             const daysSince = getDaysSince(app.dateApplied);
             const hasNotes = Boolean(app.notes && app.notes.trim().length > 0);
+            const isPastInterview = app.status === 'Interview' && isInterviewPast(app.interviewDateTime);
+            const isUpcoming = app.status === 'Interview' && isInterviewUpcoming(app.interviewDateTime);
 
             return (
               <div
@@ -331,6 +335,14 @@ export default function ApplicationList({
                     </h3>
                     <StatusBadge status={app.status} />
                     {needsFollowUp && <FollowUpBadge daysSince={daysSince} />}
+                    {isUpcoming && (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/90 dark:border-indigo-800">
+                        <svg className="w-3 h-3 text-indigo-600 dark:text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        {formatInterviewCountdown(app.interviewDateTime!)}
+                      </span>
+                    )}
                     {hasNotes && <NotesIcon />}
                   </div>
 
@@ -365,6 +377,12 @@ export default function ApplicationList({
                       </>
                     )}
                   </div>
+
+                  {isPastInterview && (
+                    <div className="pt-2 max-w-sm">
+                      <InterviewFeedbackPrompt onUpdateStatus={(newStatus) => onUpdateStatus(app.id, newStatus)} />
+                    </div>
+                  )}
                 </div>
 
                 <div
@@ -438,6 +456,8 @@ export default function ApplicationList({
                         const needsFollowUp = isFollowUpNeeded(app, settings.followUpDaysThreshold);
                         const daysSince = getDaysSince(app.dateApplied);
                         const hasNotes = Boolean(app.notes && app.notes.trim().length > 0);
+                        const isPastInterview = app.status === 'Interview' && isInterviewPast(app.interviewDateTime);
+                        const isUpcoming = app.status === 'Interview' && isInterviewUpcoming(app.interviewDateTime);
 
                         return (
                           <div
@@ -470,8 +490,20 @@ export default function ApplicationList({
 
                             <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                               {needsFollowUp && <FollowUpBadge daysSince={daysSince} />}
+                              {isUpcoming && (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-200/80 dark:border-indigo-800/80">
+                                  <svg className="w-3 h-3 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                  <span>{formatInterviewCountdown(app.interviewDateTime!)}</span>
+                                </span>
+                              )}
                               {hasNotes && <NotesIcon />}
                             </div>
+
+                            {isPastInterview && (
+                              <InterviewFeedbackPrompt onUpdateStatus={(newStatus) => onUpdateStatus(app.id, newStatus)} />
+                            )}
 
                             <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
                               <span>{app.dateApplied}</span>

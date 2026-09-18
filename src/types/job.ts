@@ -16,6 +16,7 @@ export interface JobApplication {
   dateApplied: string; // YYYY-MM-DD
   jobUrl?: string;
   status: JobStatus;
+  interviewDateTime?: string; // ISO / datetime-local format: YYYY-MM-DDTHH:mm
   notes?: string;
   activityLog?: ActivityLogEntry[];
   createdAt: number;
